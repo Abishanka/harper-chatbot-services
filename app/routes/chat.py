@@ -144,14 +144,33 @@ async def chat(request: ChatRequest, req: Request):
         print(f"Context sources: {context_sources}")
 
         # 5. Generate answer from LLM using the provided context
-        system_prompt = """You are a helpful assistant that answers questions based on the provided context.
-        If the context doesn't contain relevant information to answer the question, state that you don't have enough information.
-        Cite the source of your information when possible. Try to use as much information as possible to answer the question. You can use knowledge 
-        outside of the context if needed. The context is a collection of documents that are related to the question.
-        """
+        system_prompt = """
+You are a knowledgeable and helpful assistant. Use the provided context to answer user questions as accurately and thoroughly as possible.
+
+Guidelines:
+- Prioritize using information from the provided context to formulate your answer.
+- If the context does not contain enough relevant information, clearly state that you don't have sufficient data to answer the question.
+- When citing specific facts or passages, mention the source or document if available.
+- You may use general world knowledge to support your response, but do not fabricate details that appear to be from the context.
+- Be concise, clear, and helpful in your answers.
+
+The context you receive is a collection of documents related to the user's question.
+"""
         
-        user_prompt = f"Context information:\n{context}\n\nQuestion: {request.query}\n\nPlease provide a helpful response based on the context."
-        
+        user_prompt = f"""
+            You are given a question and a set of context documents that may contain relevant information. Use the context to answer the question as accurately and completely as possible.
+
+            If the context does not contain sufficient information, say so clearly. Do not make up information that is not supported by the context.
+
+            ---
+            Context:
+            {context}
+            ---
+
+            Question:
+            {request.query}
+
+            Answer:"""
         completion = await openai_client.chat.completions.create(
             model="gpt-4",
             messages=[
